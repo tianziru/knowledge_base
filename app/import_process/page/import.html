@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>灵犀智库 · 导入后台</title>
+    <style>
+        :root {
+            --sidebar: #1e293b;
+            --sidebar-hover: #334155;
+            --sidebar-active: #0ea5e9;
+            --bg: #f1f5f9;
+            --panel: #ffffff;
+            --text: #0f172a;
+            --muted: #64748b;
+            --border: #e2e8f0;
+            --ok: #16a34a;
+            --warn: #d97706;
+            --err: #dc2626;
+            --info: #0284c7;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+        .sidebar {
+            width: 220px;
+            background: var(--sidebar);
+            color: #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+        .brand {
+            padding: 22px 18px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .brand-name {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: #fff;
+        }
+        .brand-sub {
+            margin-top: 4px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        .nav {
+            padding: 12px 10px;
+            flex: 1;
+        }
+        .nav-item {
+            display: block;
+            width: 100%;
+            text-align: left;
+            border: none;
+            background: transparent;
+            color: #cbd5e1;
+            padding: 10px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        .nav-item:hover { background: var(--sidebar-hover); color: #fff; }
+        .nav-item.active {
+            background: rgba(14, 165, 233, 0.18);
+            color: #7dd3fc;
+            font-weight: 600;
+        }
+        .sidebar-foot {
+            padding: 14px 16px 18px;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            font-size: 12px;
+        }
+        .sidebar-foot a {
+            color: #7dd3fc;
+            text-decoration: none;
+        }
+        .sidebar-foot a:hover { text-decoration: underline; }
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        .topbar {
+            background: var(--panel);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .topbar h1 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .service-pill {
+            font-size: 12px;
+            color: var(--muted);
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            padding: 4px 10px;
+            border-radius: 999px;
+        }
+        .service-pill.ok { color: var(--ok); border-color: #bbf7d0; background: #f0fdf4; }
+        .content {
+            padding: 20px 24px 32px;
+            flex: 1;
+        }
+        .panel { display: none; }
+        .panel.active { display: block; }
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+        }
+        .card .label { font-size: 12px; color: var(--muted); }
+        .card .value { font-size: 26px; font-weight: 700; margin-top: 6px; }
+        .section-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin: 0 0 12px;
+        }
+        .upload-area {
+            border: 2px dashed #38bdf8;
+            border-radius: 10px;
+            padding: 36px 20px;
+            text-align: center;
+            cursor: pointer;
+            background: var(--panel);
+            margin-bottom: 16px;
+            transition: background 0.2s;
+        }
+        .upload-area:hover { background: #f0f9ff; }
+        .upload-icon { font-size: 40px; margin-bottom: 8px; }
+        .format-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            justify-content: center;
+            margin-top: 12px;
+        }
+        .tag {
+            font-size: 11px;
+            background: #e0f2fe;
+            color: #0369a1;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .file-input { display: none; }
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+        .toolbar-hint { font-size: 13px; color: var(--muted); flex: 1; }
+        .btn, .btn-secondary, .btn-remove {
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .btn {
+            background: var(--info);
+            color: #fff;
+            border: none;
+            padding: 8px 14px;
+        }
+        .btn:hover { background: #0369a1; }
+        .btn:disabled { background: #94a3b8; cursor: not-allowed; }
+        .btn-secondary {
+            background: #64748b;
+            color: #fff;
+            border: none;
+            padding: 8px 14px;
+        }
+        .btn-secondary:hover { background: #475569; }
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+        .filters select, .filters input {
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px 10px;
+            font-size: 13px;
+            background: #fff;
+        }
+        .filters input { min-width: 200px; flex: 1; }
+        .file-list { margin-top: 8px; }
+        .file-item {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .file-info { flex: 1; min-width: 0; }
+        .file-name { font-weight: 600; color: #1e293b; word-break: break-all; }
+        .file-size, .task-id, .error-msg {
+            display: block;
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 3px;
+        }
+        .error-msg { color: var(--err); }
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #fff;
+            min-width: 72px;
+            text-align: center;
+            white-space: nowrap;
+        }
+        .status-uploading { background: var(--warn); }
+        .status-processing { background: var(--info); }
+        .status-completed { background: var(--ok); }
+        .status-error { background: var(--err); }
+        .progress-bar-container {
+            width: 100%;
+            height: 4px;
+            background: #f1f5f9;
+            margin-top: 8px;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            background: var(--warn);
+            width: 0%;
+            transition: width 0.3s, background-color 0.3s;
+        }
+        .log-details { margin-top: 8px; font-size: 12px; color: var(--muted); }
+        .log-details summary { cursor: pointer; user-select: none; }
+        .log-list { margin: 6px 0 0 16px; padding: 0; }
+        .log-list li { margin: 2px 0; line-height: 1.4; }
+        .btn-remove {
+            margin-left: 8px;
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 4px 8px;
+        }
+        .btn-remove:hover { border-color: #cbd5e1; color: #334155; }
+        .table-wrap {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        th, td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border);
+            text-align: left;
+        }
+        th { background: #f8fafc; color: var(--muted); font-weight: 600; }
+        tr:last-child td { border-bottom: none; }
+        .empty {
+            text-align: center;
+            color: var(--muted);
+            padding: 28px;
+            font-size: 13px;
+        }
+        .format-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+        }
+        .format-card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+        }
+        .format-card h3 { margin: 0 0 8px; font-size: 15px; }
+        .format-card p { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.55; }
+        .note {
+            margin-top: 16px;
+            font-size: 13px;
+            color: var(--muted);
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            border-radius: 8px;
+            padding: 12px 14px;
+        }
+        @media (max-width: 768px) {
+            .layout { flex-direction: column; }
+            .sidebar { width: 100%; }
+            .nav { display: flex; flex-wrap: wrap; gap: 4px; }
+            .nav-item { width: auto; }
+        }
+    </style>
+</head>
+<body>
+<div class="layout">
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-name">灵犀智库</div>
+            <div class="brand-sub">知识库导入后台</div>
+        </div>
+        <nav class="nav">
+            <button type="button" class="nav-item active" data-panel="overview">概览</button>
+            <button type="button" class="nav-item" data-panel="import">文档导入</button>
+            <button type="button" class="nav-item" data-panel="tasks">任务中心</button>
+            <button type="button" class="nav-item" data-panel="formats">格式说明</button>
+        </nav>
+        <div class="sidebar-foot">
+            <div>问答入口</div>
+            <a id="chatLink" href="http://127.0.0.1:8001/" target="_blank" rel="noopener">打开灵犀智库问答 →</a>
+        </div>
+    </aside>
+
+    <div class="main">
+        <header class="topbar">
+            <h1 id="pageTitle">概览</h1>
+            <span class="service-pill" id="servicePill">服务检测中…</span>
+        </header>
+
+        <div class="content">
+            <!-- 概览 -->
+            <section class="panel active" id="panel-overview">
+                <div class="cards" id="statCards">
+                    <div class="card"><div class="label">累计任务</div><div class="value" id="statTotal">-</div></div>
+                    <div class="card"><div class="label">今日任务</div><div class="value" id="statToday">-</div></div>
+                    <div class="card"><div class="label">进行中</div><div class="value" id="statProcessing">-</div></div>
+                    <div class="card"><div class="label">已完成</div><div class="value" id="statCompleted">-</div></div>
+                    <div class="card"><div class="label">失败</div><div class="value" id="statFailed">-</div></div>
+                </div>
+                <h2 class="section-title">最近任务</h2>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                        <tr><th>文件</th><th>状态</th><th>创建时间</th></tr>
+                        </thead>
+                        <tbody id="recentBody">
+                        <tr><td colspan="3" class="empty">暂无任务</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- 文档导入 -->
+            <section class="panel" id="panel-import">
+                <div class="toolbar">
+                    <div class="toolbar-hint">上传文档至灵犀智库；进度本地保存，刷新后自动恢复</div>
+                    <button class="btn-secondary" type="button" id="clearHistoryBtn">清空历史记录</button>
+                </div>
+                <div class="upload-area" id="dropZone">
+                    <div class="upload-icon">☁️</div>
+                    <p>点击或拖拽文件到此处</p>
+                    <div class="format-tags">
+                        <span class="tag">PDF</span>
+                        <span class="tag">MD</span>
+                        <span class="tag">TXT</span>
+                        <span class="tag">DOCX</span>
+                        <span class="tag">PPTX</span>
+                    </div>
+                    <input type="file" id="fileInput" class="file-input" multiple
+                           accept=".pdf,.md,.markdown,.txt,.text,.docx,.pptx,.doc,.ppt">
+                </div>
+                <div id="fileList" class="file-list"></div>
+            </section>
+
+            <!-- 任务中心 -->
+            <section class="panel" id="panel-tasks">
+                <div class="filters">
+                    <select id="statusFilter">
+                        <option value="all">全部状态</option>
+                        <option value="pending">排队中</option>
+                        <option value="processing">处理中</option>
+                        <option value="completed">已完成</option>
+                        <option value="failed">失败</option>
+                        <option value="uploading">上传中</option>
+                    </select>
+                    <input type="search" id="nameFilter" placeholder="搜索文件名…">
+                    <button class="btn-secondary" type="button" id="refreshTasksBtn">刷新</button>
+                    <button class="btn-secondary" type="button" id="clearHistoryBtn2">清空全部</button>
+                </div>
+                <div id="taskCenterList" class="file-list"></div>
+            </section>
+
+            <!-- 格式说明 -->
+            <section class="panel" id="panel-formats">
+                <div class="format-grid">
+                    <div class="format-card">
+                        <h3>PDF</h3>
+                        <p>经 MinerU 解析为 Markdown，保留版面与图片链路后切分入库。</p>
+                    </div>
+                    <div class="format-card">
+                        <h3>Markdown (.md)</h3>
+                        <p>直接进入图片处理与切分流程，适合已整理好的手册。</p>
+                    </div>
+                    <div class="format-card">
+                        <h3>TXT / TEXT</h3>
+                        <p>按 UTF-8 / GBK 等编码读取，包装为 Markdown 后入库。</p>
+                    </div>
+                    <div class="format-card">
+                        <h3>Word (.docx)</h3>
+                        <p>抽取段落与表格文本转为 Markdown。旧版 .doc 请另存为 .docx。</p>
+                    </div>
+                    <div class="format-card">
+                        <h3>PowerPoint (.pptx)</h3>
+                        <p>按幻灯片抽取文本转为 Markdown。旧版 .ppt 请另存为 .pptx。</p>
+                    </div>
+                </div>
+                <div class="note">
+                    说明：导入后台不包含登录鉴权；删除任务记录不会删除已写入向量库的数据。
+                    问答请使用侧栏「打开灵犀智库问答」。
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_BASE = '';
+    const STORAGE_KEY = 'kb_import_tasks_v4';
+    const LEGACY_STORAGE_KEY = 'kb_import_tasks_v3';
+    const pollingTimers = {};
+    const TITLES = {
+        overview: '概览',
+        import: '文档导入',
+        tasks: '任务中心',
+        formats: '格式说明'
+    };
+
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const fileList = document.getElementById('fileList');
+    const taskCenterList = document.getElementById('taskCenterList');
+    const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+    const clearHistoryBtn2 = document.getElementById('clearHistoryBtn2');
+    const statusFilter = document.getElementById('statusFilter');
+    const nameFilter = document.getElementById('nameFilter');
+    const refreshTasksBtn = document.getElementById('refreshTasksBtn');
+    const servicePill = document.getElementById('servicePill');
+
+    // 侧栏导航
+    document.querySelectorAll('.nav-item').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const name = btn.dataset.panel;
+            document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b === btn));
+            document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === `panel-${name}`));
+            document.getElementById('pageTitle').textContent = TITLES[name] || name;
+            if (name === 'overview') refreshStats();
+            if (name === 'tasks') renderTaskCenter();
+        });
+    });
+
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.style.backgroundColor = '#f0f9ff';
+    });
+    dropZone.addEventListener('dragleave', () => { dropZone.style.backgroundColor = ''; });
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.style.backgroundColor = '';
+        handleFiles(e.dataTransfer.files);
+    });
+    fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+    async function clearAllHistory() {
+        if (!confirm('确认清空本页历史任务记录？')) return;
+        const tasks = loadTasks();
+        for (const t of tasks) {
+            try { await fetch(`${API_BASE}/tasks/${t.taskId}`, { method: 'DELETE' }); } catch (_) {}
+            stopPolling(t.taskId);
+        }
+        saveTasks([]);
+        fileList.innerHTML = '';
+        renderTaskCenter();
+        refreshStats();
+    }
+    clearHistoryBtn.addEventListener('click', clearAllHistory);
+    clearHistoryBtn2.addEventListener('click', clearAllHistory);
+    refreshTasksBtn.addEventListener('click', async () => {
+        await syncFromServer();
+        renderTaskCenter();
+        refreshStats();
+    });
+    statusFilter.addEventListener('change', renderTaskCenter);
+    nameFilter.addEventListener('input', renderTaskCenter);
+
+    function handleFiles(files) {
+        Array.from(files).forEach(uploadFile);
+        // 上传时切到导入面板便于查看进度
+        document.querySelector('.nav-item[data-panel="import"]').click();
+    }
+
+    function migrateLegacyStorage() {
+        try {
+            if (localStorage.getItem(STORAGE_KEY)) return;
+            const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
+            if (legacy) localStorage.setItem(STORAGE_KEY, legacy);
+        } catch (_) {}
+    }
+
+    function loadTasks() {
+        migrateLegacyStorage();
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            const arr = raw ? JSON.parse(raw) : [];
+            return Array.isArray(arr) ? arr : [];
+        } catch (_) {
+            return [];
+        }
+    }
+
+    function saveTasks(tasks) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+    }
+
+    function upsertTask(task) {
+        const tasks = loadTasks().filter(t => t.taskId !== task.taskId);
+        tasks.unshift(task);
+        saveTasks(tasks.slice(0, 100));
+    }
+
+    function removeTask(taskId) {
+        saveTasks(loadTasks().filter(t => t.taskId !== taskId));
+        stopPolling(taskId);
+        document.getElementById(`task-${taskId}`)?.remove();
+        document.getElementById(`center-${taskId}`)?.remove();
+        renderTaskCenter();
+        refreshStats();
+    }
+
+    function updateProgressBar(bar, percentage) {
+        if (!bar) return;
+        bar.style.width = percentage + '%';
+        bar.style.backgroundColor = percentage >= 100 ? '#0284c7' : '#d97706';
+    }
+
+    function escapeHtml(text) {
+        return String(text)
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;');
+    }
+
+    function createTaskItem({ taskId, fileName, fileSize, status, error }, container) {
+        const id = container === taskCenterList ? `center-${taskId}` : `task-${taskId}`;
+        const existing = document.getElementById(id);
+        if (existing) return existing;
+
+        const sizeText = fileSize ? `${(fileSize / 1024).toFixed(2)} KB` : '-';
+        const html = `
+            <div class="file-item" id="${id}" data-task-id="${taskId}">
+                <div class="file-info">
+                    <span class="file-name">${escapeHtml(fileName || '未知文件')}</span>
+                    <span class="task-id">任务ID: ${taskId}</span>
+                    <span class="file-size">${sizeText}</span>
+                    <span class="error-msg" style="display:none;"></span>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar"></div>
+                    </div>
+                    <details class="log-details">
+                        <summary>日志（点击展开）</summary>
+                        <ul class="log-list"></ul>
+                    </details>
+                </div>
+                <div style="display:flex;align-items:center;">
+                    <div class="status-badge status-uploading">上传中...</div>
+                    <button class="btn-remove" type="button" title="从列表移除">移除</button>
+                </div>
+            </div>
+        `;
+        container.insertAdjacentHTML('afterbegin', html);
+        const itemEl = document.getElementById(id);
+        itemEl.querySelector('.btn-remove').addEventListener('click', async () => {
+            try { await fetch(`${API_BASE}/tasks/${taskId}`, { method: 'DELETE' }); } catch (_) {}
+            removeTask(taskId);
+        });
+        applyStatusUI(itemEl, status || 'uploading', error);
+        return itemEl;
+    }
+
+    function applyStatusUI(itemEl, status, error) {
+        const statusBadge = itemEl.querySelector('.status-badge');
+        const progressBar = itemEl.querySelector('.progress-bar');
+        const errEl = itemEl.querySelector('.error-msg');
+        if (error) {
+            errEl.style.display = 'block';
+            errEl.textContent = error;
+        }
+        if (status === 'completed') {
+            statusBadge.textContent = '已完成';
+            statusBadge.className = 'status-badge status-completed';
+            updateProgressBar(progressBar, 100);
+        } else if (status === 'failed' || status === 'error') {
+            statusBadge.textContent = '失败';
+            statusBadge.className = 'status-badge status-error';
+        } else if (status === 'processing' || status === 'pending') {
+            statusBadge.textContent = status === 'pending' ? '排队中...' : '处理中...';
+            statusBadge.className = 'status-badge status-processing';
+            updateProgressBar(progressBar, 30);
+        } else if (status === 'uploading') {
+            statusBadge.textContent = '上传中...';
+            statusBadge.className = 'status-badge status-uploading';
+            updateProgressBar(progressBar, 50);
+        }
+    }
+
+    async function uploadFile(file) {
+        const tempId = 'temp-' + Math.random().toString(36).slice(2, 10);
+        const itemEl = createTaskItem({
+            taskId: tempId,
+            fileName: file.name,
+            fileSize: file.size,
+            status: 'uploading'
+        }, fileList);
+        const statusBadge = itemEl.querySelector('.status-badge');
+
+        const formData = new FormData();
+        formData.append('files', file);
+
+        try {
+            const response = await fetch(`${API_BASE}/upload`, { method: 'POST', body: formData });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                throw new Error(result.detail || 'Upload failed');
+            }
+            const taskId = result.task_ids[0];
+            itemEl.remove();
+            const realItem = createTaskItem({
+                taskId,
+                fileName: file.name,
+                fileSize: file.size,
+                status: 'processing'
+            }, fileList);
+
+            upsertTask({
+                taskId,
+                fileName: file.name,
+                fileSize: file.size,
+                status: 'processing',
+                updatedAt: Date.now()
+            });
+            applyStatusUI(realItem, 'processing');
+            pollStatus(taskId, realItem);
+            renderTaskCenter();
+            refreshStats();
+        } catch (error) {
+            console.error(error);
+            statusBadge.textContent = '失败';
+            statusBadge.className = 'status-badge status-error';
+            const errEl = itemEl.querySelector('.error-msg');
+            errEl.style.display = 'block';
+            errEl.textContent = error.message || String(error);
+        }
+    }
+
+    function normalizeDoneLog(text) {
+        if (typeof text !== 'string') return String(text);
+        return text.endsWith('已完成') ? text : `${text}已完成`;
+    }
+
+    function normalizeRunningLog(text) {
+        if (typeof text !== 'string') return String(text);
+        if (text.startsWith('正在进行')) return text.endsWith('...') ? text : `${text}...`;
+        return `正在进行${text}...`;
+    }
+
+    function renderLogs(itemEl, doneList, runningList) {
+        const logSummary = itemEl.querySelector('.log-details summary');
+        const logListEl = itemEl.querySelector('.log-list');
+        const logDetails = itemEl.querySelector('.log-details');
+        const done = Array.isArray(doneList) ? doneList : [];
+        const running = Array.isArray(runningList) ? runningList : [];
+        logSummary.textContent = `日志（已完成${done.length}，进行中${running.length}，点击展开）`;
+        logListEl.innerHTML = '';
+        const lines = [...done.map(normalizeDoneLog), ...running.map(normalizeRunningLog)];
+        if (lines.length === 0) {
+            const li = document.createElement('li');
+            li.textContent = '暂无日志';
+            logListEl.appendChild(li);
+            logDetails.open = false;
+        } else {
+            for (const line of lines) {
+                const li = document.createElement('li');
+                li.textContent = line;
+                logListEl.appendChild(li);
+            }
+        }
+    }
+
+    function stopPolling(taskId) {
+        if (pollingTimers[taskId]) {
+            clearInterval(pollingTimers[taskId]);
+            delete pollingTimers[taskId];
+        }
+    }
+
+    function pollStatus(taskId, itemEl) {
+        stopPolling(taskId);
+        const tick = async () => {
+            try {
+                const res = await fetch(`${API_BASE}/status/${taskId}`);
+                if (res.status === 404) {
+                    removeTask(taskId);
+                    return;
+                }
+                const data = await res.json();
+                // 同步更新导入列表与任务中心中的同名节点
+                const nodes = [
+                    itemEl,
+                    document.getElementById(`task-${taskId}`),
+                    document.getElementById(`center-${taskId}`)
+                ].filter(Boolean);
+                const unique = [...new Set(nodes)];
+                for (const el of unique) {
+                    renderLogs(el, data.done_list, data.running_list);
+                }
+
+                const status = data.status || '';
+                const error = data.error || '';
+                if (status === 'completed') {
+                    unique.forEach(el => applyStatusUI(el, 'completed'));
+                    upsertTask({
+                        taskId,
+                        fileName: data.file_name || itemEl.querySelector('.file-name').textContent,
+                        fileSize: data.file_size || 0,
+                        status: 'completed',
+                        updatedAt: Date.now()
+                    });
+                    stopPolling(taskId);
+                    refreshStats();
+                    renderTaskCenter();
+                } else if (status === 'failed') {
+                    unique.forEach(el => applyStatusUI(el, 'failed', error));
+                    upsertTask({
+                        taskId,
+                        fileName: data.file_name || itemEl.querySelector('.file-name').textContent,
+                        fileSize: data.file_size || 0,
+                        status: 'failed',
+                        error,
+                        updatedAt: Date.now()
+                    });
+                    stopPolling(taskId);
+                    refreshStats();
+                    renderTaskCenter();
+                } else if (status === 'processing' || status === 'pending') {
+                    unique.forEach(el => applyStatusUI(el, status));
+                }
+            } catch (e) {
+                console.error('Polling error', e);
+            }
+        };
+        tick();
+        pollingTimers[taskId] = setInterval(tick, 2000);
+    }
+
+    function statusLabel(status) {
+        const map = {
+            completed: '已完成',
+            failed: '失败',
+            error: '失败',
+            processing: '处理中',
+            pending: '排队中',
+            uploading: '上传中'
+        };
+        return map[status] || status || '-';
+    }
+
+    function renderTaskCenter() {
+        const status = statusFilter.value;
+        const q = (nameFilter.value || '').trim().toLowerCase();
+        const tasks = loadTasks().filter(t => {
+            if (status !== 'all' && (t.status || '') !== status) return false;
+            if (q && !(t.fileName || '').toLowerCase().includes(q)) return false;
+            return true;
+        });
+        taskCenterList.innerHTML = '';
+        if (tasks.length === 0) {
+            taskCenterList.innerHTML = '<div class="empty">没有匹配的任务</div>';
+            return;
+        }
+        for (const t of tasks) {
+            const el = createTaskItem(t, taskCenterList);
+            applyStatusUI(el, t.status, t.error);
+            if (t.status !== 'completed' && t.status !== 'failed' && t.status !== 'uploading') {
+                pollStatus(t.taskId, el);
+            }
+        }
+    }
+
+    async function refreshStats() {
+        try {
+            const res = await fetch(`${API_BASE}/stats`);
+            if (!res.ok) throw new Error('stats failed');
+            const data = await res.json();
+            servicePill.textContent = '导入服务在线';
+            servicePill.classList.add('ok');
+            document.getElementById('statTotal').textContent = data.total ?? 0;
+            document.getElementById('statToday').textContent = data.today ?? 0;
+            const by = data.by_status || {};
+            document.getElementById('statProcessing').textContent =
+                (by.processing || 0) + (by.pending || 0);
+            document.getElementById('statCompleted').textContent = by.completed || 0;
+            document.getElementById('statFailed').textContent = by.failed || 0;
+
+            const tbody = document.getElementById('recentBody');
+            const recent = data.recent || [];
+            if (!recent.length) {
+                tbody.innerHTML = '<tr><td colspan="3" class="empty">暂无任务</td></tr>';
+            } else {
+                tbody.innerHTML = recent.map(t => `
+                    <tr>
+                        <td>${escapeHtml(t.file_name || '-')}</td>
+                        <td>${escapeHtml(statusLabel(t.status))}</td>
+                        <td>${escapeHtml(t.created_at || '-')}</td>
+                    </tr>
+                `).join('');
+            }
+        } catch (_) {
+            // 后端短暂不可用时，用本地缓存凑合展示
+            servicePill.textContent = '导入服务不可达';
+            servicePill.classList.remove('ok');
+            const local = loadTasks();
+            document.getElementById('statTotal').textContent = local.length;
+            document.getElementById('statToday').textContent = '-';
+            document.getElementById('statProcessing').textContent =
+                local.filter(t => t.status === 'processing' || t.status === 'pending').length;
+            document.getElementById('statCompleted').textContent =
+                local.filter(t => t.status === 'completed').length;
+            document.getElementById('statFailed').textContent =
+                local.filter(t => t.status === 'failed').length;
+        }
+    }
+
+    async function syncFromServer() {
+        try {
+            const res = await fetch(`${API_BASE}/tasks`);
+            if (!res.ok) return;
+            const data = await res.json();
+            const serverIds = new Set((data.tasks || []).map(t => t.task_id));
+            // 清理 localStorage 中服务端已不存在的僵尸任务（双向同步）
+            for (const t of loadTasks()) {
+                if (!serverIds.has(t.taskId)) {
+                    removeTask(t.taskId);
+                }
+            }
+            for (const t of (data.tasks || [])) {
+                upsertTask({
+                    taskId: t.task_id,
+                    fileName: t.file_name,
+                    fileSize: t.file_size,
+                    status: t.status || 'processing',
+                    error: t.error || '',
+                    updatedAt: Date.now()
+                });
+            }
+        } catch (e) {
+            console.warn('同步后端任务列表失败', e);
+        }
+    }
+
+    async function restoreTasks() {
+        await syncFromServer();
+        // 从与服务端同步后的干净 localStorage 渲染任务列表
+        for (const t of loadTasks()) {
+            const itemEl = createTaskItem(t, fileList);
+            renderLogs(itemEl, [], []);
+            if (t.status === 'completed' || t.status === 'failed') {
+                applyStatusUI(itemEl, t.status, t.error);
+            } else if (t.status !== 'uploading') {
+                pollStatus(t.taskId, itemEl);
+            }
+        }
+        renderTaskCenter();
+        refreshStats();
+    }
+
+    restoreTasks();
+    setInterval(refreshStats, 15000);
+</script>
+</body>
+</html>
